@@ -9,6 +9,8 @@ function App() {
   const [language, setLanguage] = useState('javascript')
   const [roomId, setRoomId] = useState('')
   const [joined, setJoined] = useState(false)
+  const [output, setOutput] = useState('')
+  const [running, setRunning] = useState(false)
   const editorRef = useRef(null)
   const isRemoteUpdate = useRef(false)
 
@@ -19,14 +21,12 @@ function App() {
         editorRef.current.setValue(code)
       }
     })
-
     socket.on('code-update', (code) => {
       if (editorRef.current) {
         isRemoteUpdate.current = true
         editorRef.current.setValue(code)
       }
     })
-
     return () => {
       socket.off('load-code')
       socket.off('code-update')
@@ -45,9 +45,26 @@ function App() {
       isRemoteUpdate.current = false
       return
     }
-    if (joined) {
-      socket.emit('code-change', { roomId, code: value })
-    }
+    if (joined) socket.emit('code-change', { roomId, code: value })
+  }
+
+  const runCode = async () => {
+      const code = editorRef.current?.getValue()
+  if (!code) return
+  setRunning(true)
+  setOutput('Running...')
+  try {
+    const res = await fetch('http://localhost:3001/run', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ language, code }),
+    })
+    const data = await res.json()
+    setOutput(data.output)
+  } catch (e) {
+    setOutput('Error: ' + e.message)
+  }
+  setRunning(false)
   }
 
   return (
@@ -73,17 +90,26 @@ function App() {
             <option value="python">Python</option>
             <option value="cpp">C++</option>
           </select>
+          <button className="run-btn" onClick={runCode} disabled={running}>
+            {running ? 'Running...' : '▶ Run'}
+          </button>
         </div>
       </div>
-      <Editor
-        height="90vh"
-        language={language}
-        defaultValue="// Start coding here..."
-        theme="vs-dark"
-        options={{ fontSize: 16, minimap: { enabled: false }, wordWrap: 'on' }}
-        onMount={editor => { editorRef.current = editor }}
-        onChange={handleEditorChange}
-      />
+      <div className="main">
+        <Editor
+          height="100%"
+          language={language}
+          defaultValue="// Start coding here..."
+          theme="vs-dark"
+          options={{ fontSize: 16, minimap: { enabled: false }, wordWrap: 'on' }}
+          onMount={editor => { editorRef.current = editor }}
+          onChange={handleEditorChange}
+        />
+        <div className="output-panel">
+          <div className="output-header">Output</div>
+          <pre className="output-content">{output || 'Click ▶ Run to see output'}</pre>
+        </div>
+      </div>
     </div>
   )
 }
