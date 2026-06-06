@@ -18,8 +18,7 @@ function App() {
     setError('')
     setResult(null)
     try {
-      const res = await axios.post('http://127.0.0.1:8000/backtest', {
-        ticker,
+ const res = await axios.post('https://stock-backtester-api-txtx.onrender.com/backtest', {        ticker,
         start_date: startDate,
         end_date: endDate,
         short_window: parseInt(shortWindow),
