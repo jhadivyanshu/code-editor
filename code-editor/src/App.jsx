@@ -53,7 +53,7 @@ function App() {
   setRunning(true)
   setOutput('Running...')
   try {
-    const res = await fetch('http://localhost:3001/run', {
+     const res = await fetch('https://code-editor-api-1z2v.onrender.com/run', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ language, code }),
